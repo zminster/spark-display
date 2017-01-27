@@ -96,9 +96,9 @@ void keyPressed() {
 void fieldOfCubes() {
   //strokeWeight(1.2);
   pushMatrix();
-  translate(width/2 + width/10,height/2,225 + 150 * sin(frameCount/75.0));
-  rotateX(frameCount / 75.0);
-  rotateZ(frameCount / 75.0);
+  translate(width/2 + width/10,height/2,225 + 150 * sin(frameCount/100.0));
+  rotateX(frameCount / 100.0);
+  rotateZ(frameCount / 100.0);
   stroke(0);
   strokeWeight(1);
   for (int x = -250; x <= 250; x+=75) {  // 6x6x6 cube
@@ -114,7 +114,7 @@ void fieldOfCubes() {
         int yn = (y + 250) / 75;
         int index = yn * 6 + xn ;// 30 ? yn * 6 + xn : 29;
         float scaleFactor = log(fft.getAvg(index) + 1);
-        scaleFactor = min(scaleFactor, 5.0);
+        scaleFactor = min(scaleFactor * 6, 5.0);
         scale( scaleFactor + 5 );
         box(5);
         popMatrix();
