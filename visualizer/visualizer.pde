@@ -1,8 +1,24 @@
+import ddf.minim.analysis.FFT;
+import ddf.minim.Minim;
+import ddf.minim.AudioInput;
+import processing.video.Capture;
+
 String msg;
 PFont font;
 PImage bg, logo;
 
+Minim minim;
+AudioInput audioInput;
+FFT fft;
+
 float logo_aspect;
+
+float sampleRate = 44100;
+int bufferSize = 1024;
+
+int minBin = 0;
+int maxBin = bufferSize / 20;
+int binCount = maxBin - minBin;
 
 void setup() {
   fullScreen(P3D);
@@ -22,6 +38,14 @@ void setup() {
   
   // perspective settings
   camera(width/2.0, height/2.0, 1000, width/2.0, height/2.0, 0, 0, 1, 0);  //need fixed Z to avoid camera clip
+  
+  // audio setup
+  minim = new Minim(this);
+  audioInput = minim.getLineIn(Minim.MONO, bufferSize, sampleRate);
+  fft = new FFT(audioInput.bufferSize(), audioInput.sampleRate());
+  fft.window(FFT.HAMMING);
+  fft.logAverages(22, 7);
+  println(fft.avgSize());
 }
 
 void draw() {
@@ -32,6 +56,9 @@ void draw() {
   // framerate display (debug)
   fill(0);
   text(frameRate,0,0);
+  
+  // audio handling
+  fft.forward(audioInput.mix);
   
   // 3D visualizer display
   lights();
@@ -67,18 +94,29 @@ void keyPressed() {
 }
 
 void fieldOfCubes() {
+  //strokeWeight(1.2);
   pushMatrix();
   translate(width/2 + width/10,height/2,225 + 150 * sin(frameCount/75.0));
   rotateX(frameCount / 75.0);
   rotateZ(frameCount / 75.0);
-  for (int x = -250; x <= 250; x+=75) {
+  stroke(0);
+  strokeWeight(1);
+  for (int x = -250; x <= 250; x+=75) {  // 6x6x6 cube
     for (int y = -250; y <= 250; y+=75) {
       for (int z = -250; z <= 250; z+=75) {
         fill (255 - (x+250)/10,165 +(y+250)/20,(z+250)/50);
         pushMatrix();
         translate(x,y,z);
-        scale(1 + 0.2 * sin(frameCount / 75.0));
-        box(38);
+        //scale(1 + 0.2 * sin(frameCount / 75.0));
+        //int index = (x + 250) / 75 + 6 * (((y + 250) / 75) + 6 * (z + 250)/75);
+        //scale(min(    (1 + fft.getBand(round(index * 1.5))) * 4,    10));
+        int xn = (x + 250) / 75;
+        int yn = (y + 250) / 75;
+        int index = yn * 6 + xn ;// 30 ? yn * 6 + xn : 29;
+        float scaleFactor = log(fft.getAvg(index) + 1);
+        scaleFactor = min(scaleFactor, 5.0);
+        scale( scaleFactor + 5 );
+        box(5);
         popMatrix();
       }
     }
