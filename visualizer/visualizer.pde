@@ -34,7 +34,7 @@ void setup() {
   msg = "";
   font = createFont("Calibri",16,true);
   textFont(font,12);
-  textMode(SHAPE);
+  textMode(MODEL);
   
   // perspective settings
   camera(width/2.0, height/2.0, 1000, width/2.0, height/2.0, 0, 0, 1, 0);  //need fixed Z to avoid camera clip
@@ -106,7 +106,9 @@ void fieldOfCubes() {
       for (int z = -250; z <= 250; z+=75) {
         fill (255 - (x+250)/10,165 +(y+250)/20,(z+250)/50);
         pushMatrix();
-        translate(x,y,z);
+        translate(x * 2 + sin(frameCount / 100.0),y * 2 + sin(frameCount / 100.0),z * 2 + sin(frameCount / 100));
+        rotateY((frameCount + y)/ 1000.0);
+        rotateZ((frameCount + x)/ 1000.0);
         //scale(1 + 0.2 * sin(frameCount / 75.0));
         //int index = (x + 250) / 75 + 6 * (((y + 250) / 75) + 6 * (z + 250)/75);
         //scale(min(    (1 + fft.getBand(round(index * 1.5))) * 4,    10));
