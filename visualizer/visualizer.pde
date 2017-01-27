@@ -1,18 +1,40 @@
 String msg;
 PFont font;
+PImage bg;
 
 void setup() {
+  fullScreen(P3D);
+  
+  // asset setup
+  bg = loadImage("background.png");
+  
+  // text setup
   msg = "";
-  size(500,500);
   font = createFont("Calibri",16,true);
-  textFont(font,36);
+  textFont(font,12);
+  textMode(SHAPE);
+  
+  /*float cameraZ = ((height/2.0) / tan(PI*60.0/360.0));
+  println(cameraZ);
+  perspective(PI/3.0, width/height, cameraZ/30.0, cameraZ*10.0); */
 }
 
 void draw() {
+  //background
   background(65);
+  //image(bg,0,0);
+  
+  // 3D visualizer display
+  lights();
+  //camera(width/2.0 + sin(frameCount / 150.0) * 100, height/2.0 + (50 * sin(frameCount / 150.0)), width/2.0 + cos(frameCount / 150.0) * 100, width/2.0, height/2.0, 0, 0, 1, 0);
+  fieldOfCubes();
+  
+  // display text
+  //drawAxes();
+  translate(0,0,800);
   fill(255);
   textAlign(CENTER);
-  text(msg,width/2,height-100);
+  text(msg,width/2,height/2+height/20);
 }
 
 void keyPressed() {
@@ -29,4 +51,40 @@ void keyPressed() {
   }
   
   println("Message: " + msg);
+}
+
+void fieldOfCubes() {
+  pushMatrix();
+  translate(width/2,height/2,225 + 150 * sin(frameCount/150.0));
+  rotateX(frameCount / 150.0);
+  rotateZ(frameCount / 150.0);
+  for (int x = -250; x <= 250; x+=50) {
+    for (int y = -250; y <= 250; y+=50) {
+      for (int z = -250; z <= 250; z+=50) {
+        fill (x/5 + 100,y/5 + 100,z/5 + 100);
+        pushMatrix();
+        translate(x,y,z);
+        scale(1 + 0.2 * sin(frameCount / 150.0));
+        box(25);
+        popMatrix();
+      }
+    }
+  }
+  popMatrix();
+}
+
+void drawAxes() {
+  strokeWeight(10);
+  
+  // x axis
+  stroke(255,0,0);  // red
+  line(0,0,0,100,0,0);
+  
+  // y axis
+  stroke(0,255,0);  // green
+  line(0,0,0,0,100,0);
+  
+  // z axis
+  stroke(0,0,255);  // blue
+  line(0,0,0,0,0,100);
 }
