@@ -20,9 +20,15 @@ int minBin = 0;
 int maxBin = bufferSize / 20;
 int binCount = maxBin - minBin;
 
+boolean spreadMode;
+boolean rotateMode;
+
 void setup() {
   fullScreen(P3D);
   frameRate(30);
+  
+  spreadMode = false;
+  rotateMode = false;
   
   // asset setup
   bg = loadImage("background.png");
@@ -32,9 +38,9 @@ void setup() {
   
   // text setup
   msg = "";
-  font = createFont("Calibri",16,true);
-  textFont(font,12);
-  textMode(MODEL);
+  font = createFont("PassionOne-Bold.ttf",500,true);
+  textFont(font,50);
+  textMode(MODEL);  // faster, but looks like trash
   
   // perspective settings
   camera(width/2.0, height/2.0, 1000, width/2.0, height/2.0, 0, 0, 1, 0);  //need fixed Z to avoid camera clip
@@ -45,17 +51,16 @@ void setup() {
   fft = new FFT(audioInput.bufferSize(), audioInput.sampleRate());
   fft.window(FFT.HAMMING);
   fft.logAverages(22, 7);
-  println(fft.avgSize());
 }
 
 void draw() {
   // background
-  background(200);
+  background(100);
   //image(bg,0,0);
   
   // framerate display (debug)
-  fill(0);
-  text(frameRate,0,0);
+  /*fill(0);
+  text(frameRate,0,0);*/
   
   // audio handling
   fft.forward(audioInput.mix);
@@ -71,10 +76,13 @@ void draw() {
   rotateZ(-PI/2);
   image(logo,0,0);
   popMatrix();
-  translate(0,0,800);  // bring text in front of all 3D graphics
-  fill(25);
+  
+  translate(width/2,height/2 + height / 15,800);  // bring text in front of all 3D graphics
+  scale(0.5);
+  //fill(135,206,250);
+  fill(255);
   textAlign(CENTER);
-  text(msg,width/2,height/2+height/10);
+  text(msg,0,0);
 }
 
 void keyPressed() {
@@ -85,7 +93,11 @@ void keyPressed() {
       msg = msg.substring(0, msg.length() -1);
   } else if (key == ENTER || key == RETURN) {
     msg = msg + '\n';
-  } else {
+  } else if (keyCode == LEFT || keyCode == RIGHT) {  // left/right to enable/disable cube rotate mode
+    rotateMode = keyCode == RIGHT;
+  } else if (keyCode == UP || keyCode == DOWN) {  // up/down to enable/disable cube spreading mode
+    spreadMode = keyCode == UP;
+  }{
     if (key > 31 && key < 256) // only allow valid ASCII printable keys
       msg = msg + key;
   }
@@ -106,9 +118,14 @@ void fieldOfCubes() {
       for (int z = -250; z <= 250; z+=75) {
         fill (255 - (x+250)/10,165 +(y+250)/20,(z+250)/50);
         pushMatrix();
-        translate(x * 2 + sin(frameCount / 100.0),y * 2 + sin(frameCount / 100.0),z * 2 + sin(frameCount / 100));
-        rotateY((frameCount + y)/ 1000.0);
-        rotateZ((frameCount + x)/ 1000.0);
+        if (spreadMode)
+          translate(x * 2 + sin(frameCount / 100.0),y * 2 + sin(frameCount / 100.0),z * 2 + sin(frameCount / 100));
+        else
+          translate(x,y,z);
+        if (rotateMode) {
+          rotateY((frameCount + y)/ 1000.0);
+          rotateZ((frameCount + x)/ 1000.0);
+        }
         //scale(1 + 0.2 * sin(frameCount / 75.0));
         //int index = (x + 250) / 75 + 6 * (((y + 250) / 75) + 6 * (z + 250)/75);
         //scale(min(    (1 + fft.getBand(round(index * 1.5))) * 4,    10));
