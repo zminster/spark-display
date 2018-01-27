@@ -32,13 +32,13 @@ void setup() {
   
   // asset setup
   bg = loadImage("background.png");
-  logo = loadImage("logo2017.png");
+  logo = loadImage("logo2018.png");
   logo_aspect = logo.height / logo.width;
-  logo.resize(round(height), round(logo_aspect * height));
+  logo.resize(round(height / 4.0), round(logo_aspect * height / 4.0));
   
   // text setup
   msg = "";
-  font = createFont("PassionOne-Bold.ttf",500,true);
+  font = createFont("Nunito-Bold.ttf",500,true);
   textFont(font,50);
   textMode(MODEL);  // faster, but looks like trash
   
@@ -55,7 +55,7 @@ void setup() {
 
 void draw() {
   // background
-  background(100);
+  background(20);
   //image(bg,0,0);
   
   // framerate display (debug)
@@ -72,8 +72,8 @@ void draw() {
   
   // fixed logo/text
   pushMatrix();
-  translate(-150,height,0);
-  rotateZ(-PI/2);
+  //translate(-150,height,0);
+  //rotateZ(-PI/2);
   image(logo,0,0);
   popMatrix();
   
