@@ -20,31 +20,42 @@ int minBin = 0;
 int maxBin = bufferSize / 20;
 int binCount = maxBin - minBin;
 
+int activeViz;
 boolean spreadMode;
 boolean rotateMode;
+
+color baseColor;
 
 void setup() {
   fullScreen(P3D);
   frameRate(30);
-  
+  colorMode(HSB, 100);
+
+  activeViz = 0;
   spreadMode = false;
   rotateMode = false;
-  
+
+  baseColor = color(255);
+  FIELDWIDTH = width;
+  FIELDHEIGHT = height;
+
   // asset setup
   bg = loadImage("background.png");
   logo = loadImage("logo2018.png");
   logo_aspect = logo.height / logo.width;
   logo.resize(round(height / 4.0), round(logo_aspect * height / 4.0));
-  
+  randomize();
+  initPanels();
+
   // text setup
   msg = "";
-  font = createFont("Nunito-Bold.ttf",500,true);
-  textFont(font,50);
+  font = createFont("Nunito-Bold.ttf", 500, true);
+  textFont(font, 50);
   textMode(MODEL);  // faster, but looks like trash
-  
+
   // perspective settings
   camera(width/2.0, height/2.0, 1000, width/2.0, height/2.0, 0, 0, 1, 0);  //need fixed Z to avoid camera clip
-  
+
   // audio setup
   minim = new Minim(this);
   audioInput = minim.getLineIn(Minim.MONO, bufferSize, sampleRate);
@@ -55,34 +66,53 @@ void setup() {
 
 void draw() {
   // background
-  background(20);
+  background(0, 0, 20);
   //image(bg,0,0);
-  
+
   // framerate display (debug)
   /*fill(0);
-  text(frameRate,0,0);*/
-  
+   text(frameRate,0,0);*/
+
   // audio handling
   fft.forward(audioInput.mix);
-  
-  // 3D visualizer display
-  lights();
-  directionalLight(255,127,80,0,-1,0);
-  fieldOfCubes();
-  
+
+  // base color mixing
+  baseColor = color(frameCount / 25.0 % 100, 80, 90);
+
+  // select visualizer display
+  switch (activeViz) {
+    case 0:
+      lights();
+      directionalLight(hue(baseColor), 100, 80, 0, -1, 0);
+      fieldOfCubes();
+      break;
+    case 1:
+      noStroke();
+      pushMatrix();
+      translate((width- FIELDWIDTH)/2, (height- FIELDHEIGHT)/2);
+      for (int i=0; i<numParticles; i++)
+        particles[i].update();//render particles
+      popMatrix();
+      break;
+    case 2:
+      doPanels();
+      break;
+  }
+
   // fixed logo/text
+  tint(baseColor);
   pushMatrix();
   //translate(-150,height,0);
   //rotateZ(-PI/2);
-  image(logo,0,0);
+  image(logo, 0, 0);
   popMatrix();
-  
-  translate(width/2,height/2 + height / 15,800);  // bring text in front of all 3D graphics
+
+  translate(width/2, height/2 + height / 15, 800);  // bring text in front of all 3D graphics
   scale(0.5);
   //fill(135,206,250);
-  fill(255);
+  fill(0, 0, 100);
   textAlign(CENTER);
-  text(msg,0,0);
+  text(msg, 0, 0);
 }
 
 void keyPressed() {
@@ -97,18 +127,21 @@ void keyPressed() {
     rotateMode = keyCode == RIGHT;
   } else if (keyCode == UP || keyCode == DOWN) {  // up/down to enable/disable cube spreading mode
     spreadMode = keyCode == UP;
-  }{
-    if (key > 31 && key < 256) // only allow valid ASCII printable keys
-      msg = msg + key;
-  }
-  
+  } else if (keyCode == TAB) {
+    activeViz++;
+    activeViz%=3;
+  } else if (key > 31 && key < 256) // only allow valid ASCII printable keys
+    msg = msg + key;
+    
+  println(keyCode);
+
   println("Message: " + msg);
 }
 
 void fieldOfCubes() {
   //strokeWeight(1.2);
   pushMatrix();
-  translate(width/2 + width/10,height/2,225 + 150 * sin(frameCount/100.0));
+  translate(width/2 + width/10, height/2, 225 + 150 * sin(frameCount/100.0));
   rotateX(frameCount / 100.0);
   rotateZ(frameCount / 100.0);
   stroke(0);
@@ -116,12 +149,13 @@ void fieldOfCubes() {
   for (int x = -250; x <= 250; x+=75) {  // 6x6x6 cube
     for (int y = -250; y <= 250; y+=75) {
       for (int z = -250; z <= 250; z+=75) {
-        fill (255 - (x+250)/10,165 +(y+250)/20,(z+250)/50);
+        int avg = ((x+250) + (y+250) + (z+250))/3;
+        fill (hue(baseColor)+avg/50,avg/5, avg/10 + 50);
         pushMatrix();
         if (spreadMode)
-          translate(x * 2 + sin(frameCount / 100.0),y * 2 + sin(frameCount / 100.0),z * 2 + sin(frameCount / 100));
+          translate(x * 2 + sin(frameCount / 100.0), y * 2 + sin(frameCount / 100.0), z * 2 + sin(frameCount / 100));
         else
-          translate(x,y,z);
+          translate(x, y, z);
         if (rotateMode) {
           rotateY((frameCount + y)/ 1000.0);
           rotateZ((frameCount + x)/ 1000.0);
@@ -145,16 +179,16 @@ void fieldOfCubes() {
 
 void drawAxes() {
   strokeWeight(10);
-  
+
   // x axis
-  stroke(255,0,0);  // red
-  line(0,0,0,100,0,0);
-  
+  stroke(255, 0, 0);  // red
+  line(0, 0, 0, 100, 0, 0);
+
   // y axis
-  stroke(0,255,0);  // green
-  line(0,0,0,0,100,0);
-  
+  stroke(0, 255, 0);  // green
+  line(0, 0, 0, 0, 100, 0);
+
   // z axis
-  stroke(0,0,255);  // blue
-  line(0,0,0,0,0,100);
+  stroke(0, 0, 255);  // blue
+  line(0, 0, 0, 0, 0, 100);
 }
