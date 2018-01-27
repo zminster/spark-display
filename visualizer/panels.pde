@@ -2,11 +2,14 @@ class Box {
   float rand;
   boolean rotatingX, rotatingY, rotatingZ;
   int rotProgress;
+  float teeter;
   int DEGREE_CHANGE;
   
   Box() {
     rand = random(100);
     DEGREE_CHANGE = int(random(10)+5);
+    teeter = 0;
+    rotProgress = 0;
   }
   
   void render(int x, int y, int z, boolean shouldRotate) {
@@ -18,6 +21,7 @@ class Box {
       rotatingY = false;
       rotatingZ = false;
       rotProgress = 0;
+      teeter = 0;
     } else if (rotatingX) {
       rotateX(radians(rotProgress));
     } else if (rotatingY) {
@@ -39,6 +43,10 @@ class Box {
           rotProgress = 0;
           break;
       }
+    } else {
+      teeter += radians(sin(frameCount / 100.0) * 0.5);
+      rotateZ(teeter);
+      rotateY(teeter);
     }
     scale(1,1,0.2);
     box(48);
