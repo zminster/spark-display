@@ -48,8 +48,9 @@ class Box {
       rotateZ(teeter);
       rotateY(teeter);
     }
-    scale(1,1,0.2);
-    box(48);
+    //scale(1,1,0.2);
+    scale(0.5 + 5 * level, 0.5 + 5 * level, 0.2);
+    box(BOX_SIZE);
     popMatrix();
   }
     
@@ -72,9 +73,6 @@ void initPanels() {
 }
 
 void doPanels() {
-  float bass = fft.calcAvg(0, 400);
-  float mid = fft.calcAvg(400, 4000)*8;
-  float high = fft.calcAvg(4000, 20000)*8;
   
   pushMatrix();
   noStroke();

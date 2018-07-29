@@ -50,10 +50,6 @@ class Particle {
 
   void update() {
 
-    float bass = fft.calcAvg(0, 400);
-    float mid = fft.calcAvg(400, 4000)*8;
-    float high = fft.calcAvg(4000, 20000)*8;
-
     id+=0.01;
 
     if (bass == 0|| mid == 0) {

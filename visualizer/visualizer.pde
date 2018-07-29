@@ -3,6 +3,12 @@ import ddf.minim.Minim;
 import ddf.minim.AudioInput;
 import processing.video.Capture;
 
+import ch.bildspur.postfx.builder.*;
+import ch.bildspur.postfx.pass.*;
+import ch.bildspur.postfx.*;
+
+PostFX fx;
+
 String msg;
 PFont font;
 PImage bg, logo;
@@ -23,8 +29,12 @@ int binCount = maxBin - minBin;
 int activeViz;
 boolean spreadMode;
 boolean rotateMode;
+boolean shouldDoLogo;
 
 color baseColor;
+
+float bass, mid, high, level;
+double bass_avg, mid_avg, high_avg, level_avg;
 
 void setup() {
   fullScreen(P3D);
@@ -45,7 +55,12 @@ void setup() {
   logo_aspect = logo.height / logo.width;
   logo.resize(round(height / 4.0), round(logo_aspect * height / 4.0));
   randomize();
+  fx = new PostFX(this);
+  fx.preload(BloomPass.class);
   initPanels();
+  initSuperPanels();
+  initVaporwave();
+  initWarp();
 
   // text setup
   msg = "";
@@ -75,11 +90,25 @@ void draw() {
 
   // audio handling
   fft.forward(audioInput.mix);
+  bass = fft.calcAvg(0, 400);
+  mid = fft.calcAvg(400, 4000)*8;
+  high = fft.calcAvg(4000, 20000)*8;
+  level = audioInput.mix.level();
+  
+  // update (running, weighted) averages
+  bass_avg = ((bass_avg*(frameCount -1) + bass) / frameCount);
+  mid_avg = ((mid_avg*(frameCount -1) + mid) / frameCount);
+  high_avg = ((high_avg*(frameCount -1) + high) / frameCount);
+  level_avg = ((level_avg*(frameCount -1) + level) / frameCount);
 
   // base color mixing
   baseColor = color(frameCount / 25.0 % 100, 80, 90);
+  
+  // default camera
+  camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
 
   // select visualizer display
+  shouldDoLogo = true;
   switch (activeViz) {
     case 0:
       lights();
@@ -97,22 +126,48 @@ void draw() {
     case 2:
       doPanels();
       break;
+    case 3:
+      doSuperPanels();
+      break;
+    case 4:
+      doWarp();
+      shouldDoLogo = false;
+      break;
+    case 5:
+      pushMatrix();
+      doVaporwave();
+      shouldDoLogo = false;
+      popMatrix();
+      break;
   }
+  // resets
+  emissive(0,0,0);
 
   // fixed logo/text
-  tint(baseColor);
-  pushMatrix();
-  //translate(-150,height,0);
-  //rotateZ(-PI/2);
-  image(logo, 0, 0);
-  popMatrix();
+  if (shouldDoLogo) {
+    tint(hue(baseColor),100,100);
+    pushMatrix();
+    //translate(-150,height,0);
+    //rotateZ(-PI/2);
+    image(logo, 0, 0);
+    popMatrix();
+    noTint();
+  }
 
   translate(width/2, height/2 + height / 15, 800);  // bring text in front of all 3D graphics
   scale(0.5);
   //fill(135,206,250);
+  if (!shouldDoLogo)
+    emissive(0,0,100);
   fill(0, 0, 100);
   textAlign(CENTER);
   text(msg, 0, 0);
+  if (!shouldDoLogo)
+    emissive(0,0,0);
+  
+  fx.render()
+  .bloom(0.5,10,10)
+  .compose();
 }
 
 void keyPressed() {
@@ -129,7 +184,7 @@ void keyPressed() {
     spreadMode = keyCode == UP;
   } else if (keyCode == TAB) {
     activeViz++;
-    activeViz%=3;
+    activeViz%=6;
   } else if (key > 31 && key < 256) // only allow valid ASCII printable keys
     msg = msg + key;
     
