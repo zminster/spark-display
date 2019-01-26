@@ -11,7 +11,7 @@ PostFX fx;
 
 String msg;
 PFont font;
-PImage bg, logo;
+PImage bg, logo, logo_solid;
 
 Minim minim;
 AudioInput audioInput;
@@ -37,7 +37,7 @@ float bass, mid, high, level;
 double bass_avg, mid_avg, high_avg, level_avg;
 
 void setup() {
-  fullScreen(P3D);
+  size(2160,1080,P3D);
   frameRate(30);
   colorMode(HSB, 100);
 
@@ -54,6 +54,7 @@ void setup() {
   logo = loadImage("logo2018.png");
   logo_aspect = logo.height / logo.width;
   logo.resize(round(height / 4.0), round(logo_aspect * height / 4.0));
+  logo_solid = loadImage("logo_solid.png");
   randomize();
   fx = new PostFX(this);
   fx.preload(BloomPass.class);
@@ -61,6 +62,7 @@ void setup() {
   initSuperPanels();
   initVaporwave();
   initWarp();
+  initField();
 
   // text setup
   msg = "";
@@ -92,7 +94,7 @@ void draw() {
   fft.forward(audioInput.mix);
   bass = fft.calcAvg(0, 400);
   mid = fft.calcAvg(400, 4000)*8;
-  high = fft.calcAvg(4000, 20000)*8;
+  high = fft.calcAvg(2000, 20000)*8;
   level = audioInput.mix.level();
   
   // update (running, weighted) averages
@@ -134,6 +136,10 @@ void draw() {
       shouldDoLogo = false;
       break;
     case 5:
+      doField();
+      shouldDoLogo = false;
+      break;
+    case 6:
       pushMatrix();
       doVaporwave();
       shouldDoLogo = false;
@@ -184,7 +190,7 @@ void keyPressed() {
     spreadMode = keyCode == UP;
   } else if (keyCode == TAB) {
     activeViz++;
-    activeViz%=6;
+    activeViz%=7;
   } else if (key > 31 && key < 256) // only allow valid ASCII printable keys
     msg = msg + key;
     
